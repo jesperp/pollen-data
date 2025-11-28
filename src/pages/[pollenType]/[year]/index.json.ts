@@ -4,9 +4,7 @@ import { pollenYears } from "~/globals"
 export async function GET({ params, request }) {
   const { year, pollenType } = params
   const region = await getEntry("region", "goeteborg")
-  console.log("[index.astro] region:", region)
   const pt = await getEntry("pollenType", pollenType)
-  console.log("[index.astro] pt:", pt)
 
   const searchParams = new URLSearchParams({
     region_id: region!.data.nrmId,

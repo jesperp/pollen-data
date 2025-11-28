@@ -5,7 +5,6 @@ const region = defineCollection({
   loader: async () => {
     const response = await fetch("https://api.pollenrapporten.se/v1/regions")
     const json = await response.json()
-    console.log("[content.config.ts] REGIONS json:", json)
     return json.items.map((item: { id: string; name: string }) => ({
       id: slugify(item.name),
       name: item.name,
@@ -25,7 +24,6 @@ const pollenLevel = defineCollection({
     )
     const json = await response.json()
     const items = json.items
-    console.log("[content.config.ts] items:", items)
     return items.map((item: { level: number; name: string }) => ({
       id: item.level.toString(),
       name: item.name,
@@ -44,16 +42,12 @@ const pollenType = defineCollection({
     )
     const json = await response.json()
     const items = json.items
-    const returned = items.map(
-      ({ id, name, ...rest }: { id: string; name: string }) => ({
-        name,
-        ...rest,
-        id: slugify(name),
-        nrmId: id,
-      }),
-    )
-    console.log("[content.config.ts] returned:", returned)
-    return returned
+    return items.map(({ id, name, ...rest }: { id: string; name: string }) => ({
+      name,
+      ...rest,
+      id: slugify(name),
+      nrmId: id,
+    }))
   },
   schema: z.object({
     id: z.string(),

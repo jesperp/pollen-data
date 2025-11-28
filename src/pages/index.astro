@@ -74,12 +74,10 @@ const pollenTypes = await getCollection("pollenType")
     const formData = new FormData(form);
     const pollenType = formData.get('pollen')
     const pollenLabel = document.querySelector(`label[for="${pollenType}"]`)
-    console.log("[index.astro] pollenLabel:", pollenLabel);
     const year = formData.get('year')
 
     const data = await fetch(`/${pollenType}/${year}/index.json`)
     const items = await data.json()
-    console.log("[index.astro] items:", items)
     chart.data.labels = items.map( item => new Date(item.date))
     chart.data.datasets[0].data = items.map( item => item.dailyCount)
     chart.data.datasets[0].label = `${pollenLabel?.textContent} ${year}`
