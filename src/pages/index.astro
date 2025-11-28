@@ -1,0 +1,123 @@
+---
+import "~/styles/global.css"
+import { getCollection } from "astro:content"
+import { pollenYears } from "~/globals"
+
+const pollenTypes = await getCollection("pollenType")
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+    <style>
+    @reference "tailwindcss";
+    label:has(input[type="radio"]:checked) {
+      @apply bg-green-400;
+
+    }
+    </style>
+  </head>
+  <body class="p-2">
+
+    <form id="pollenForm" class="p-4 flex justify-between content-center">
+      <fieldset class="flex">
+        <label class="bg-green-200 pl-4 pr-3 py-2 font-semibold rounded-l-xl" for="year2025">
+          <input class="hidden" type="radio" name="year" id="year2025" value="2025" checked>
+          2025
+        </label>
+        <label class="bg-green-200 pr-4 pl-3 py-2 font-semibold rounded-r-xl" for="year2024">
+          <input class="hidden"  type="radio" name="year" id="year2024" value="2024" >
+          2024
+        </label>
+      </fieldset>
+
+      <fieldset class="flex gap-2">
+        {pollenTypes.map( pollenType => 
+        <label class="bg-green-200 px-3 py-2 font-semibold rounded-xl" for={pollenType.id}>
+          <input class="hidden"  type="radio" name="pollen" id={pollenType.id} value={pollenType.id}> {pollenType.data.name} </label>
+        )
+        }
+      </fieldset>
+      <button style="background-color: #9ad0f5;" class="rounded-xl px-4 py-2">
+        Show data
+      </button>
+    </form>
+
+    <canvas id="myChart"></canvas>
+
+  <script>
+  import { prefetch } from "astro:prefetch";
+  import { Chart } from "chart.js/auto"
+  import 'chartjs-adapter-luxon';
+
+  const ctx = document.getElementById("myChart") as HTMLCanvasElement
+  const form = document.getElementById("pollenForm") as HTMLFormElement
+
+  const inputs = document.getElementsByTagName('input')
+
+  // Prefetch onchange for snappier interaction
+  for (let input of inputs) {
+    input.addEventListener('change', function() {
+      const formData = new FormData(form);
+      const pollenType = formData.get('pollen')
+      const year = formData.get('year')
+      prefetch(`/${pollenType}/${year}/index.json`)
+    })
+  }
+
+  form?.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const pollenType = formData.get('pollen')
+    const pollenLabel = document.querySelector(`label[for="${pollenType}"]`)
+    console.log("[index.astro] pollenLabel:", pollenLabel);
+    const year = formData.get('year')
+
+    const data = await fetch(`/${pollenType}/${year}/index.json`)
+    const items = await data.json()
+    console.log("[index.astro] items:", items)
+    chart.data.labels = items.map( item => new Date(item.date))
+    chart.data.datasets[0].data = items.map( item => item.dailyCount)
+    chart.data.datasets[0].label = `${pollenLabel?.textContent} ${year}`
+    chart.update();
+
+  })
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'LABEL',
+        data: [],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            // Luxon format string
+            displayFormats: {
+              quarter: 'MMM YYYY'
+            },
+          },
+          title: {
+            display: true,
+            text: 'Date'
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+  </script>
+  </body>
+</html>
